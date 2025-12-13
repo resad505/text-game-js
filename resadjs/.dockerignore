@@ -1,0 +1,11 @@
+# Bağımlılık klasörünü dışarıda bırak
+node_modules
+
+# Log dosyaları ve hata ayıklama dosyalarını dışarıda bırak
+npm-debug.log
+.DS_Store
+*.log
+
+# Docker dosyalarını dışarıda bırak (isteğe bağlı ama iyi pratik)
+Dockerfile
+.dockerignore
