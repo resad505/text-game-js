@@ -1,0 +1,28 @@
+/* Dropdown menü arka planı ve stilleri */
+.dropdown-menu {
+    background-color: #000000 !important;
+}
+
+.dropdown-item {
+    color: #ffffff !important;
+    background-color: #000000 !important;
+    font-size: 24px;
+    padding: 15px 15px;
+}
+
+.dropdown-item:hover {
+    background-color: #333333 !important;
+    color: white !important;
+}
+
+.dropdown-toggle {
+    background-color: #000000 !important;
+    color: white !important;
+    font-size: 16px;
+}
+.dropdown {
+    padding: 10px;
+}
+.dropdown:hover .dropdown-content {
+         display: block;
+     }

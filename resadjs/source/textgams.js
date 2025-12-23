@@ -248,15 +248,164 @@ function handleMonsterBattle(monsterChoice) {
 }
 
 let healthpotionvalue = 20;
-function useHealthPotion() {
-  if (inventory.includes("health potion")) {
-    health += healthpotionvalue;
-    if (health > 100) health = 100; // Max health
-    console.log("You used a health potion! Health restored to " + health);
-    inventory.splice(inventory.indexOf("health potion"), 1); // Remove from inventory
+let strengthpotionvalue = 5;
+let luckpotionvalue = 3;
+
+// Constants for health management
+const MAX_HEALTH = 100;
+const MIN_HEALTH = 0;
+const DEFEATED_RESTORE_HEALTH = 50;
+
+// Create function to safely update player health
+function updateHealth(amount, reason = "") {
+  const oldHealth = health;
+  health = Math.max(MIN_HEALTH, Math.min(health + amount, MAX_HEALTH));
+  
+  const changeAmount = health - oldHealth;
+  const changeSymbol = changeAmount > 0 ? "+" : "";
+  
+  if (reason) {
+    console.log(`[${reason}] Health: ${oldHealth} → ${health} (${changeSymbol}${changeAmount})`);
   } else {
-    console.log("You don't have a health potion!");
+    console.log(`Health updated: ${oldHealth} → ${health} (${changeSymbol}${changeAmount})`);
   }
+  
+  return {
+    newHealth: health,
+    oldHealth: oldHealth,
+    changeAmount: changeAmount,
+    isDead: health <= MIN_HEALTH,
+    isHealed: changeAmount > 0
+  };
+}
+
+// Get health status with visual indicator
+function getHealthStatus() {
+  const percent = (health / MAX_HEALTH) * 100;
+  let status = "";
+  
+  if (percent === 100) {
+    status = "Perfect ✓";
+  } else if (percent >= 75) {
+    status = "Good";
+  } else if (percent >= 50) {
+    status = "Fair";
+  } else if (percent >= 25) {
+    status = "Low ⚠";
+  } else {
+    status = "Critical ✗";
+  }
+  
+  return {
+    health: health,
+    maxHealth: MAX_HEALTH,
+    percent: percent.toFixed(1),
+    status: status,
+    healthBar: `[${"|".repeat(Math.floor(percent / 10))}${" ".repeat(10 - Math.floor(percent / 10))}]`
+  };
+}
+
+// Display health bar visually
+function displayHealthBar() {
+  const healthInfo = getHealthStatus();
+  console.log(`\nHealth: ${healthInfo.health}/${healthInfo.maxHealth} (${healthInfo.percent}%)`);
+  console.log(`${healthInfo.healthBar} ${healthInfo.status}`);
+}
+
+// Check if player is alive
+function isPlayerAlive() {
+  return health > MIN_HEALTH;
+}
+
+// Restore health to specific amount
+function restoreHealth(amount) {
+  return updateHealth(amount, "Restored");
+}
+
+// Damage health
+function takeDamage(amount, source = "Unknown") {
+  const result = updateHealth(-amount, `Damage from ${source}`);
+  
+  if (result.isDead) {
+    console.log(`\n*** You were defeated! ***`);
+    restoreHealth(DEFEATED_RESTORE_HEALTH - health);
+  }
+  
+  return result;
+}
+
+// Define item effects
+const itemEffects = {
+  "health potion": { stat: "health", value: 20, maxStat: 100 },
+  "strength potion": { stat: "strength", value: 5, maxStat: 50 },
+  "luck potion": { stat: "luck", value: 3, maxStat: 20 }
+};
+
+// Create function to handle using items like potions
+function useItem(itemName) {
+  if (!inventory.includes(itemName)) {
+    console.log(`\nYou don't have a ${itemName}!`);
+    return false;
+  }
+
+  const effect = itemEffects[itemName];
+  
+  if (!effect) {
+    console.log(`\nUnknown item: ${itemName}`);
+    return false;
+  }
+
+  // Apply item effect
+  const statName = effect.stat;
+  let currentValue = eval(statName); // Get current stat value
+  const newValue = Math.min(currentValue + effect.value, effect.maxStat);
+  
+  eval(`${statName} = ${newValue}`); // Update stat
+  
+  console.log(`\n✓ You used a ${itemName}!`);
+  console.log(`  ${statName.charAt(0).toUpperCase() + statName.slice(1)} increased by ${newValue - currentValue}!`);
+  console.log(`  Current ${statName}: ${newValue}`);
+  
+  // Remove item from inventory
+  inventory.splice(inventory.indexOf(itemName), 1);
+  return true;
+}
+
+// Alternative: Use item from inventory menu
+function useItemFromMenu() {
+  if (inventory.length === 0) {
+    console.log("Your inventory is empty!");
+    return;
+  }
+
+  console.log("\n=== Use Item ===");
+  const usableItems = inventory.filter(item => itemEffects[item]);
+  
+  if (usableItems.length === 0) {
+    console.log("No usable items in inventory!");
+    return;
+  }
+
+  usableItems.forEach((item, index) => {
+    console.log(`${index + 1}. ${item}`);
+  });
+  console.log(`${usableItems.length + 1}. Cancel`);
+
+  const choice = readline.question("Choose an item to use: ");
+  const choiceNum = parseInt(choice);
+
+  if (choiceNum > 0 && choiceNum <= usableItems.length) {
+    useItem(usableItems[choiceNum - 1]);
+  } else if (choiceNum === usableItems.length + 1) {
+    console.log("Cancelled.");
+  } else {
+    console.log("Invalid choice!");
+  }
+}
+
+// Keep legacy function for compatibility
+function useHealthPotion() {
+  useItem("health potion");
 }
 
 // Create for loop to check inventory slots
