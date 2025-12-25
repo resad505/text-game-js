@@ -78,3 +78,10 @@
      .dropdown:hover .dropdown-content {
          display: block;
      }
+
+     p {
+         text-decoration-line: underline;
+         text-decoration-color: red;
+         text-decoration-style: solid;
+         text-decoration-thickness: 5px;
+     }
