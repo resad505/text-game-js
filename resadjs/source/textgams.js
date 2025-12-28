@@ -15,8 +15,51 @@ const INVENTORY_SLOTS = 10;
 const MAX_STRENGTH = 50;
 const MAX_LUCK = 20;
 
+// ============================================
+// ITEM TEMPLATES
+// ============================================
+class Item {
+  constructor(name, price, description = "") {
+    this.name = name;
+    this.price = price;
+    this.description = description;
+  }
+}
+
+class Weapon extends Item {
+  constructor(name, price, damage, durability, description = "") {
+    super(name, price, description);
+    this.damage = damage;
+    this.durability = durability;
+    this.type = "weapon";
+  }
+}
+
+class Potion extends Item {
+  constructor(name, price, stat, value, description = "") {
+    super(name, price, description);
+    this.stat = stat;
+    this.value = value;
+    this.type = "potion";
+  }
+}
+
+//special weapons
+const SUPERIOR_SWORD ={
+   name: "Superior Sword",
+   damage: "50",
+   DURABILITY:150
+  };
+sword1={
+    name: "Basic Sword",
+    damage: "10",
+    DURABILITY:50
+   };
 // Potion values
-const HEALTH_POTION_VALUE = 20;
+const HEALTH_POTION={
+  name: "Health Potion",
+  heal: 20
+} ;
 const STRENGTH_POTION_VALUE = 5;
 const LUCK_POTION_VALUE = 3;
 
@@ -25,6 +68,7 @@ const SWORD_1_PRICE = 50;
 const SWORD_2_PRICE = 100;
 const SWORD_3_PRICE = 150;
 const HEALTH_POTION_PRICE = 20;
+const BOOK_PRICE = 10;
 
 // Sword damage
 const SWORD_1_DAMAGE = 5;
@@ -193,7 +237,7 @@ function showInventory() {
   } else {
     console.log("Items in inventory:");
     for (let i = 0; i < inventory.length; i++) {
-      console.log((i + 1) + ". " + inventory[i]);
+      console.log((i + 1) + ". " + (inventory[i].name || inventory[i]));
     }
   }
   console.log(`Slots used: ${inventory.length} / ${INVENTORY_SLOTS}`);
@@ -215,7 +259,7 @@ function hasInventorySpace() {
 function addToInventory(item) {
   if (hasInventorySpace()) {
     inventory.push(item);
-    console.log(item + " added to inventory!");
+    console.log((item.name || item) + " added to inventory!");
     return true;
   } else {
     console.log("Your inventory is full! Cannot carry more items.");
@@ -306,7 +350,8 @@ function useHealthPotion() {
  * @returns {boolean} True if item was used successfully, false if item not found or invalid
  */
 function useItem(itemName) {
-  if (!inventory.includes(itemName)) {
+  const itemIndex = inventory.findIndex(item => (item.name || item) === itemName);
+  if (itemIndex === -1) {
     console.log(`\nYou don't have a ${itemName}!`);
     return false;
   }
@@ -328,7 +373,7 @@ function useItem(itemName) {
   console.log(`  ${statName.charAt(0).toUpperCase() + statName.slice(1)} increased by ${newValue - currentValue}!`);
   console.log(`  Current ${statName}: ${newValue}`);
   
-  inventory.splice(inventory.indexOf(itemName), 1);
+  inventory.splice(itemIndex, 1);
   return true;
 }
 
@@ -342,7 +387,7 @@ function useItemFromMenu() {
   }
 
   console.log("\n=== Use Item ===");
-  const usableItems = inventory.filter(item => itemEffects[item]);
+  const usableItems = inventory.filter(item => itemEffects[item.name || item]);
   
   if (usableItems.length === 0) {
     console.log("No usable items in inventory!");
@@ -350,7 +395,7 @@ function useItemFromMenu() {
   }
 
   usableItems.forEach((item, index) => {
-    console.log(`${index + 1}. ${item}`);
+    console.log(`${index + 1}. ${item.name || item}`);
   });
   console.log(`${usableItems.length + 1}. Cancel`);
 
@@ -358,7 +403,8 @@ function useItemFromMenu() {
   const choiceNum = parseInt(choice);
 
   if (choiceNum > 0 && choiceNum <= usableItems.length) {
-    useItem(usableItems[choiceNum - 1]);
+    const selectedItem = usableItems[choiceNum - 1];
+    useItem(selectedItem.name || selectedItem);
   } else if (choiceNum === usableItems.length + 1) {
     console.log("Cancelled.");
   } else {
@@ -380,7 +426,8 @@ function shop() {
   console.log(`2. Buy Sword 2 (${SWORD_2_PRICE} gold) - Damage +${SWORD_2_DAMAGE}`);
   console.log(`3. Buy Sword 3 (${SWORD_3_PRICE} gold) - Damage +${SWORD_3_DAMAGE}`);
   console.log(`4. Buy Health Potion (${HEALTH_POTION_PRICE} gold)`);
-  console.log("5. Back to Menu");
+  console.log(`5. Buy Book (${BOOK_PRICE} gold)`);
+  console.log("6. Back to Menu");
   
   let choice = readline.question("Choose an option: ");
   
@@ -398,12 +445,15 @@ function shop() {
       buyHealthPotion();
       break;
     case "5":
+      buyBook();
+      break;
+    case "6":
       console.log("Leaving the shop.");
       break;
     default:
       console.log("Invalid choice.");
   }
-}
+} 
 
 /**
  * Handles purchasing a sword and adds it to inventory
@@ -416,7 +466,7 @@ function buySword(price, damage, swordName) {
   if (gold >= price) {
     gold -= price;
     weapondamage += damage;
-    addToInventory(swordName);
+    addToInventory(new Weapon(swordName, price, damage, 50, "A sharp blade."));
     console.log(`Weapon damage increased to: ${weapondamage}`);
   } else {
     console.log("Not enough gold!");
@@ -429,9 +479,21 @@ function buySword(price, damage, swordName) {
 function buyHealthPotion() {
   if (gold >= HEALTH_POTION_PRICE) {
     gold -= HEALTH_POTION_PRICE;
-    addToInventory("health potion");
+    addToInventory(new Potion("health potion", HEALTH_POTION_PRICE, "health", 20, "Restores 20 health."));
   } else {
     console.log(`Not enough gold! Health potion costs ${HEALTH_POTION_PRICE} gold.`);
+  }
+}
+
+/**
+ * Handles purchasing a book and adds it to inventory
+ */
+function buyBook() {
+  if (gold >= BOOK_PRICE) {
+    gold -= BOOK_PRICE;
+    addToInventory(new Item("book", BOOK_PRICE, "A mysterious book."));
+  } else {
+    console.log(`Not enough gold! Book costs ${BOOK_PRICE} gold.`);
   }
 }
 
@@ -766,4 +828,3 @@ while (gameRunning) {
       console.log("Invalid choice. Please try again.");
   }
 }
-
